@@ -10,6 +10,9 @@ require("./connection"); // ✅ Centralized MongoDB connection
 // Create Express app
 const pfServer = express();
 
+const path = require('path');
+pfServer.use("/upload", express.static(path.join(__dirname, "uploads")));
+
 // Middleware
 pfServer.use(cors());
 pfServer.use(express.json());
@@ -25,3 +28,7 @@ pfServer.listen(PORT, () => {
     console.log(`✅ Server is running successfully at PORT ${PORT}`);
     console.log("🔄 Waiting for MongoDB connection...");
 });
+
+pfServer.get('/',(req,res)=>{
+    res.send(`Get Request Recieved`)
+})

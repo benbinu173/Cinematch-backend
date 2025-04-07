@@ -1,49 +1,43 @@
     const movies = require("../Models/moviemodels")
+    const jwt = require("jsonwebtoken");
 
 
-    exports.addMovies = async (req, res) =>
-        {
-            console.log('inside the add-movies and in the controller');
-        
-        
-            const { title, year, rating, overview} = req.body
-            //the details are taken from the body of the request. 
-        
-            console.log(title, year, rating, overview);
-        
-            const movieImg = req.file.filename
-            console.log(movieImg);
-            
-            const userId  = req.payload
-            console.log(userId);
-            
-        
-            try{
-                const existingMovie = await movies.findOne({title})
-        
-                if(existingMovie)
-                {
-                    res.status(406).json(`movie already exists !!`)
-                }
-                else{
-                    const newMovie = new movies({
-                        
-                        title, year, rating, overview,movieImg,userId
-        
-                    })
-                    await newMovie.save()
-                    res.status(200).json(newMovie)
-                }
-            }
-            catch (error)
-            {
-                    res.status(401).json(`Movie adding failed due to ${error}`)
-            }
-            
-        
-        
-            
+    exports.addMovies = async (req, res) => {
+        console.log('inside the add-movies and in the controller');
+      
+        const { title, year, rating, overview, tmdbId } = req.body; // ✅ include tmdbId
+        console.log(title, year, rating, overview, tmdbId);
+      
+        const movieImg = req.file.filename;
+        console.log("Image:", movieImg);
+      
+        const userId = req.payload;
+        console.log("User:", userId);
+      
+        try {
+          const existingMovie = await movies.findOne({ title });
+      
+          if (existingMovie) {
+            res.status(406).json(`Movie already exists!!`);
+          } else {
+            const newMovie = new movies({
+              title,
+              year,
+              rating,
+              overview,
+              tmdbId, // ✅ saving TMDb ID
+              movieImg,
+              userId
+            });
+      
+            await newMovie.save();
+            res.status(200).json(newMovie);
+          }
+        } catch (error) {
+          res.status(401).json(`Movie adding failed due to ${error}`);
         }
+      };
+      
 
         exports.getUserMoviesController = async (req ,res) =>
 
@@ -86,42 +80,43 @@
                     
                 }
 
-                exports.updateUserMovieController = async (req , res) =>
-
-                    {
-                        console.log(`inside  update user movie`)
+                exports.updateUserMovieController = async (req, res) => {
+                    console.log(`Inside update user movie`);
                 
-                        // id is for the project id
-                        const {id} = req.params
-                        const userId = req.payload
+                    const { id } = req.params;
+                    const userId = req.payload;
                 
-                        const{title,year,rating,overview,movieImg} = req.body
-                        console.log(title,year,rating,overview,movieImg);
+                    const { title, year, rating, overview } = req.body;
+                    // no movieImg from body
+                    const uploadedImage = req.file ? req.file.filename : null;
                 
-                        // here we created upload image because if we edit by givin the porjecta new image the new image will be saved in upload image else the old img tht is profile img.
-                        const uploadImage = req.file ? req.file.filename : movieImg
+                    try {
+                        const existingMovie = await movies.findById(id);
                 
-                        try{
-                            const existingMovie = await movies.findByIdAndUpdate({_id : id} , 
+                        if (!existingMovie) {
+                            return res.status(404).json({ message: "Movie not found" });
+                        }
+                
+                        const updatedMovie = await movies.findByIdAndUpdate(
+                            { _id: id },
                             {
                                 title,
                                 year,
                                 rating,
-                                
                                 overview,
-                                movieImg : uploadImage,
-                                userId
-                            },{new:true})
+                                movieImg: uploadedImage ? uploadedImage : existingMovie.movieImg,
+                                userId,
+                            },
+                            { new: true }
+                        );
                 
-                            await existingMovie.save()
-                            res.status(200).json(existingMovie)
-                        }
-                        catch (error)
-                        {
-                            res.status(401).json(error)
-                        }
-                        
+                        res.status(200).json(updatedMovie);
+                    } catch (error) {
+                        console.log("Update error:", error);
+                        res.status(500).json(error);
                     }
+                };
+                
                 
 
                     // exports.getMovieByTmdbId = async (req, res) => {
