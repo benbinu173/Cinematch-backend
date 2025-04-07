@@ -120,32 +120,35 @@ exports.getReviewsById = async (req, res) => {
 };
 
 // ✅ Get All Reviews (Admin)
-// const Review = require("../models/review");
 const axios = require("axios");
+// const Review = require("../models/reviewModel");
 
-const TMDB_API_KEY = "104982ca487a975dd171416b2958f849"; // ✅ Already using
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
 
 exports.getAllReviews = async (req, res) => {
   try {
     const allReviews = await Review.find().populate("user", "username");
 
-    // Map over reviews to fetch titles from TMDb
     const enrichedReviews = await Promise.all(
       allReviews.map(async (review) => {
         let title = "Unknown Title";
 
-        if (review.movieId) {
-          const movieRes = await axios.get(`${TMDB_BASE_URL}/movie/${review.movieId}?api_key=${TMDB_API_KEY}`);
-          title = movieRes.data.title;
-        } else if (review.tvShowId) {
-          const tvRes = await axios.get(`${TMDB_BASE_URL}/tv/${review.tvShowId}?api_key=${TMDB_API_KEY}`);
-          title = tvRes.data.name;
+        try {
+          if (review.movieId) {
+            const movieRes = await axios.get(`${TMDB_BASE_URL}/movie/${review.movieId}?api_key=${TMDB_API_KEY}`);
+            title = movieRes.data.title;
+          } else if (review.tvShowId) {
+            const tvRes = await axios.get(`${TMDB_BASE_URL}/tv/${review.tvShowId}?api_key=${TMDB_API_KEY}`);
+            title = tvRes.data.name;
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch TMDb data for review ${review._id}: ${err.message}`);
         }
 
         return {
           ...review.toObject(),
-          title, // Add the title
+          title,
         };
       })
     );
