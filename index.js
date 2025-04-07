@@ -29,6 +29,6 @@ pfServer.listen(PORT, () => {
     console.log("🔄 Waiting for MongoDB connection...");
 });
 
-pfServer.get('/',(req,res)=>{
-    res.send(`Get Request Recieved`)
-})
+pfServer.get("/", (req, res) => {
+    res.send("Cinematch Backend is running ✅");
+  });
